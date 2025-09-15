@@ -10,6 +10,7 @@ This repository contains my local setup of **Strapi** (cloned from the official 
    using following commands:
    
 git clone https://github.com/strapi/strapi.git
+
 cd strapi
 
 2. **Install dependencies**
@@ -19,6 +20,7 @@ cd strapi
 3. **Run Strapi**
 
   npm run setup
+  
   npm run develop
 
 
