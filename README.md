@@ -44,3 +44,11 @@ Go to Content Manager → Article → Create New Entry
 
 Fill in Title, Body, Published → Click Save (and optionally Publish)
 
+## Run with Docker
+
+1. Build image:
+   ```bash
+   docker build -t my-strapi-app .
+2. Run container:
+
+   docker run -it -p 1337:1337 my-strapi-app
