@@ -1,0 +1,26 @@
+# Dockerfile.prod — multi-stage build for production
+# Stage 1: build
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN npm ci
+
+# Copy source and build admin
+COPY . .
+RUN npm run build
+
+# Stage 2: runtime
+FROM node:20-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Copy built app from builder
+COPY --from=builder /app /app
+
+# Remove dev deps (optional)
+RUN npm prune --production
+
+EXPOSE 1337
+CMD ["npm", "run", "start"]
