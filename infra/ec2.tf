@@ -1,9 +1,18 @@
+data "aws_security_group" "existing_sg" {
+  name   = "pearlt_vivek_sg"  # The name of the security group
+  vpc_id = "vpc-01b35def73b166fdc"  # Replace with your actual VPC ID
+}
+
+
 resource "aws_instance" "strapi" {
-  ami                    = data.aws_ami.amazon_linux2.id
+  ami                    = var.ami
   instance_type          = var.instance_type
-  key_name               = aws_key_pair.deployer.key_name
-  vpc_security_group_ids = [aws_security_group.strapi_sg.id]
-  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
+  key_name               = "pearlt_vivek_key"
+  vpc_security_group_ids = [data.aws_security_group.existing_sg.id]
+
+  tags = {
+    Name = "${var.repository_name}-ec2"
+  }
 
   user_data = <<-EOF
 #!/bin/bash
@@ -32,9 +41,5 @@ docker pull ${aws_ecr_repository.strapi.repository_url}:${var.image_tag}
 docker run -d --name strapi -p 80:1337 ${aws_ecr_repository.strapi.repository_url}:${var.image_tag}
 EOF
 
-  tags = {
-    Name = "${var.repository_name}-ec2"
-  }
-
-  depends_on = [null_resource.build_and_push]
+  # depends_on = [null_resource.build_and_push]
 }

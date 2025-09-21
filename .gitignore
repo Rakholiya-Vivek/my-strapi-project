@@ -122,6 +122,7 @@ coverage
 ############################
 
 .env
+strapi.env
 license.txt
 exports
 .strapi
@@ -129,3 +130,16 @@ dist
 build
 .strapi-updater.json
 .strapi-cloud.json
+
+
+# Local .terraform directories
+**/.terraform/*
+
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Terraform lock file
+.terraform.lock.hcl
+# documents
+*.doc

@@ -1,22 +1,21 @@
 variable "aws_region" {
   type    = string
-  default = "us-east-1"
+  default = "ap-south-1"
 }
 
 variable "instance_type" {
   type    = string
-  default = "t3.micro"
+  default = "t2.medium"
 }
 
-variable "ssh_public_key_path" {
-  type    = string
-  default = "~/.ssh/id_rsa.pub"
-  description = "Path to public SSH public key on your machine"
+variable "ami" {
+  type = string
+  default = "ami-01b6d88af12965bb6"
 }
 
 variable "repository_name" {
   type    = string
-  default = "strapi-app"
+  default = "my-strapi-project-vivek"
 }
 
 variable "image_tag" {
