@@ -9,6 +9,7 @@ resource "aws_instance" "strapi" {
   instance_type          = var.instance_type
   key_name               = "pearlt_vivek_key"
   vpc_security_group_ids = [data.aws_security_group.existing_sg.id]
+  iam_instance_profile   = aws_iam_instance_profile.ec2_instance_profile.name
 
   tags = {
     Name = "${var.repository_name}-ec2"
