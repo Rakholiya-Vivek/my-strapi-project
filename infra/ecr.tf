@@ -7,11 +7,6 @@
 #   }
 # }
 
-provider "aws" {
-  region = "ap-south-1"
-  profile = "pearlt"
-}
-
 # S3 bucket for Terraform state
 resource "aws_s3_bucket" "tf_state" {
   bucket = "my-terraform-state-bucket-vivek" # 🔴 change name (must be globally unique)
