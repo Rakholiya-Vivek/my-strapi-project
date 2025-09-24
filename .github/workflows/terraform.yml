@@ -46,6 +46,10 @@ jobs:
         with:
           terraform_version: 1.5.7
 
+      - name: Terraform Init
+        run: terraform init -chdir=infra/
+
+      
       - name: Terraform Plan
         run: terraform -chdir=infra plan -out=tfplan
 
