@@ -56,23 +56,21 @@ resource "null_resource" "deploy_strapi" {
   }
 
   provisioner "remote-exec" {
-    inline = [
-      # wait for user_data setup
-      "echo 'Waiting for user_data setup...' && sleep 30",
-      # verify docker + aws installed
-      "which docker || (echo 'Docker not installed' && exit 1)",
-      "which aws || (echo 'AWS CLI not installed' && exit 1)",
-
-      # create .env file
-      "cat > /home/ec2-user/strapi.env <<'EOT'\nHOST=${var.strapi_host}\nPORT=${var.strapi_port}\nAPP_KEYS=${var.app_keys}\nAPI_TOKEN_SALT=${var.api_token_salt}\nADMIN_JWT_SECRET=${var.admin_jwt_secret}\nJWT_SECRET=${var.jwt_secret}\nNODE_ENV=production\nEOT",
-
-      # authenticate ECR
-      "aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${replace(var.docker_image_uri, \"/.*$\", \"\")}",
-
-      # pull + run
-      "docker pull ${var.docker_image_uri}",
-      "docker rm -f strapi || true",
-      "docker run --env-file /home/ec2-user/strapi.env -d --name strapi -p ${var.strapi_port}:${var.strapi_port} ${var.docker_image_uri}"
-    ]
-  }
+  inline = [
+    "sudo apt-get update -y",
+    "sudo apt-get install -y docker.io",
+    "aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${replace(var.docker_image_uri, "/.*$", "")}",
+    <<EOT
+docker run -d -p 1337:1337 --name strapi \
+  -e APP_KEYS=${var.app_keys} \
+  -e API_TOKEN_SALT=${var.api_token_salt} \
+  -e ADMIN_JWT_SECRET=${var.admin_jwt_secret} \
+  -e JWT_SECRET=${var.jwt_secret} \
+  ${var.docker_image_uri}
+EOT
+  ]
 }
+
+
+
+  }
