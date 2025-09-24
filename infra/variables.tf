@@ -72,5 +72,9 @@ variable "ssh_private_key" {
   type = string 
   sensitive = true 
 }
-variable "aws_access_key_id" { sensitive = true }
-variable "aws_secret_access_key" { sensitive = true }
+variable "aws_access_key_id" { 
+  sensitive = true 
+  }
+variable "aws_secret_access_key" { 
+  sensitive = true 
+  }
