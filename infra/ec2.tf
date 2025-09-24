@@ -38,9 +38,7 @@ resource "aws_instance" "strapi" {
 
 # ... same aws_instance as before, but without iam_instance_profile ...
 locals {
-  # Extract only the registry URI part from docker_image_uri
-  # Example: 123456789012.dkr.ecr.ap-south-1.amazonaws.com
-  ecr_registry = regex("^([^/]+)", var.docker_image_uri)
+  ecr_registry = regex("^([^/]+)", var.docker_image_uri)[0]
 }
 
 resource "null_resource" "deploy_strapi" {
@@ -55,23 +53,19 @@ resource "null_resource" "deploy_strapi" {
 
   provisioner "remote-exec" {
     inline = [
-      # Install Docker
       "sudo yum update -y",
       "sudo amazon-linux-extras enable docker",
       "sudo yum install -y docker",
       "sudo service docker start",
       "sudo usermod -aG docker ec2-user",
 
-      # Install AWS CLI v2
       "sudo yum install -y unzip",
       "curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip",
       "unzip -o awscliv2.zip",
       "sudo ./aws/install",
 
-      # Login to ECR using local.ecr_registry
       "aws ecr get-login-password --region ${var.aws_region} | sudo docker login --username AWS --password-stdin ${local.ecr_registry}",
 
-      # Run Strapi container
       "sudo docker stop strapi || true",
       "sudo docker rm strapi || true",
       "sudo docker pull ${var.docker_image_uri}",
