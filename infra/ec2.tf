@@ -9,7 +9,7 @@ resource "aws_instance" "strapi" {
   instance_type          = var.instance_type
   key_name               = "pearlt_vivek_key"
   vpc_security_group_ids = [data.aws_security_group.existing_sg.id]
-  
+
 
   tags = {
     Name = "${var.repository_name}-ec2"
@@ -37,10 +37,8 @@ resource "aws_instance" "strapi" {
 }
 
 # ... same aws_instance as before, but without iam_instance_profile ...
-
 resource "null_resource" "deploy_strapi" {
   depends_on = [aws_instance.strapi]
-
   triggers = {
     image      = var.docker_image_uri
     app_keys   = var.app_keys
@@ -52,30 +50,29 @@ resource "null_resource" "deploy_strapi" {
   connection {
     type        = "ssh"
     host        = aws_instance.strapi.public_ip
-    user        = "ec2-user"
+    user        = var.ssh_user
     private_key = var.ssh_private_key
+    timeout     = "5m"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "echo HOST=0.0.0.0 > /home/ec2-user/strapi.env",
-      "echo PORT=1337 >> /home/ec2-user/strapi.env",
-      "echo APP_KEYS=${var.app_keys} >> /home/ec2-user/strapi.env",
-      "echo API_TOKEN_SALT=${var.api_token_salt} >> /home/ec2-user/strapi.env",
-      "echo ADMIN_JWT_SECRET=${var.admin_jwt_secret} >> /home/ec2-user/strapi.env",
-      "echo JWT_SECRET=${var.jwt_secret} >> /home/ec2-user/strapi.env",
-      "echo NODE_ENV=production >> /home/ec2-user/strapi.env",
+      # wait for user_data setup
+      "echo 'Waiting for user_data setup...' && sleep 30",
+      # verify docker + aws installed
+      "which docker || (echo 'Docker not installed' && exit 1)",
+      "which aws || (echo 'AWS CLI not installed' && exit 1)",
 
-      # Export AWS creds (for ECR login only)
-      "export AWS_ACCESS_KEY_ID=${var.aws_access_key_id}",
-      "export AWS_SECRET_ACCESS_KEY=${var.aws_secret_access_key}",
+      # create .env file
+      "cat > /home/ec2-user/strapi.env <<'EOT'\nHOST=${var.strapi_host}\nPORT=${var.strapi_port}\nAPP_KEYS=${var.app_keys}\nAPI_TOKEN_SALT=${var.api_token_salt}\nADMIN_JWT_SECRET=${var.admin_jwt_secret}\nJWT_SECRET=${var.jwt_secret}\nNODE_ENV=production\nEOT",
 
-      # ECR login & pull
-      "REGISTRY=$(echo ${var.docker_image_uri} | cut -d'/' -f1)",
-      "aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin $REGISTRY",
+      # authenticate ECR
+      "aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${replace(var.docker_image_uri, \"/.*$\", \"\")}",
+
+      # pull + run
       "docker pull ${var.docker_image_uri}",
       "docker rm -f strapi || true",
-      "docker run --env-file /home/ec2-user/strapi.env -d --name strapi -p 1337:1337 ${var.docker_image_uri}"
+      "docker run --env-file /home/ec2-user/strapi.env -d --name strapi -p ${var.strapi_port}:${var.strapi_port} ${var.docker_image_uri}"
     ]
   }
 }
