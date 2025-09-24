@@ -37,40 +37,45 @@ resource "aws_instance" "strapi" {
 }
 
 # ... same aws_instance as before, but without iam_instance_profile ...
+locals {
+  # Extract only the registry URI part from docker_image_uri
+  # Example: 123456789012.dkr.ecr.ap-south-1.amazonaws.com
+  ecr_registry = regex("^([^/]+)", var.docker_image_uri)
+}
+
 resource "null_resource" "deploy_strapi" {
   depends_on = [aws_instance.strapi]
-  triggers = {
-    image      = var.docker_image_uri
-    app_keys   = var.app_keys
-    api_salt   = var.api_token_salt
-    admin_jwt  = var.admin_jwt_secret
-    jwt_secret = var.jwt_secret
-  }
 
   connection {
     type        = "ssh"
     host        = aws_instance.strapi.public_ip
-    user        = var.ssh_user
+    user        = "ec2-user"
     private_key = var.ssh_private_key
-    timeout     = "5m"
   }
 
   provisioner "remote-exec" {
-  inline = [
-    "sudo apt-get update -y",
-    "sudo apt-get install -y docker.io",
-    "aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${replace(var.docker_image_uri, "/.*$", "")}",
-    <<EOT
-docker run -d -p 1337:1337 --name strapi \
-  -e APP_KEYS=${var.app_keys} \
-  -e API_TOKEN_SALT=${var.api_token_salt} \
-  -e ADMIN_JWT_SECRET=${var.admin_jwt_secret} \
-  -e JWT_SECRET=${var.jwt_secret} \
-  ${var.docker_image_uri}
-EOT
-  ]
-}
+    inline = [
+      # Install Docker
+      "sudo yum update -y",
+      "sudo amazon-linux-extras enable docker",
+      "sudo yum install -y docker",
+      "sudo service docker start",
+      "sudo usermod -aG docker ec2-user",
 
+      # Install AWS CLI v2
+      "sudo yum install -y unzip",
+      "curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip",
+      "unzip -o awscliv2.zip",
+      "sudo ./aws/install",
 
+      # Login to ECR using local.ecr_registry
+      "aws ecr get-login-password --region ${var.aws_region} | sudo docker login --username AWS --password-stdin ${local.ecr_registry}",
 
+      # Run Strapi container
+      "sudo docker stop strapi || true",
+      "sudo docker rm strapi || true",
+      "sudo docker pull ${var.docker_image_uri}",
+      "sudo docker run -d --name strapi -p 1337:1337 ${var.docker_image_uri}"
+    ]
   }
+}
