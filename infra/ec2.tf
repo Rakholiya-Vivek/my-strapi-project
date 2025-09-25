@@ -20,7 +20,9 @@ resource "aws_instance" "strapi" {
     yum update -y
     amazon-linux-extras enable docker
     amazon-linux-extras install -y docker
+    yum install docker -y
     service docker start
+    systemctl start docker
     usermod -a -G docker ec2-user
 
     # install unzip & aws cli v2
@@ -57,7 +59,9 @@ resource "null_resource" "deploy_strapi" {
       "sudo yum update -y",
       "sudo amazon-linux-extras enable docker",
       "sudo yum install -y docker -y",
+      "yum install docker -y",
       "sudo service docker start",
+      "systemctl start docker",
       "sudo usermod -aG docker ec2-user",
 
       # Install AWS CLI
