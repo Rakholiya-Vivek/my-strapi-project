@@ -10,7 +10,7 @@ variable "instance_type" {
 
 variable "ami" {
   type = string
-  default = "ami-01b6d88af12965bb6"
+  default = "ami-02d26659fd82cf299"
 }
 
 variable "repository_name" {
