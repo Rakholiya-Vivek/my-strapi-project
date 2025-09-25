@@ -4,10 +4,7 @@ data "aws_security_group" "existing_sg" {
 }
 
 
-data "aws_security_group" "existing_sg" {
-  name   = "pearlt_vivek_sg"
-  vpc_id = "vpc-01b35def73b166fdc"
-}
+
 
 resource "aws_instance" "strapi" {
   ami                    = var.ami
