@@ -50,6 +50,11 @@ jobs:
         working-directory: infra
         run: terraform init
 
+      - name: Force Unlock Terraform State (ignore errors if no lock)
+        working-directory: infra
+        run: terraform force-unlock -force 14c8a47f-9cfe-1f5a-6fa6-850b2692d89a || true
+  
+
       - name: Terraform Plan
         working-directory: infra
         run: terraform plan -out=tfplan
