@@ -57,53 +57,56 @@ resource "null_resource" "deploy_strapi" {
     host        = aws_instance.strapi.public_ip
     user        = "ubuntu"
     private_key = var.ssh_private_key
+    timeout     = "10m"
   }
 
-    provisioner "remote-exec" {
-  inline = [
-    "sudo apt-get update -y",
-    "sudo apt-get upgrade -y",
+  provisioner "remote-exec" {
+    inline = [
+      # update & install dependencies non-interactive
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get update -y",
+      "sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y",
 
-    # install docker
-    "sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common unzip",
-    "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -",
-    "sudo add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable\"",
-    "sudo apt-get update -y",
-    "sudo apt-get install -y docker-ce docker-ce-cli containerd.io",
+      # install Docker prerequisites
+      "sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common unzip",
 
-    "sudo systemctl start docker",
-    "sudo systemctl enable docker",
-    "sudo usermod -aG docker ubuntu",
+      # add Docker’s GPG and repo
+      "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -",
+      "sudo add-apt-repository \"deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable\"",
+      "sudo apt-get update -y",
+      "sudo apt-get install -y docker-ce docker-ce-cli containerd.io",
 
-    # install aws cli v2
-    "curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip",
-    "unzip -o awscliv2.zip",
-    "sudo ./aws/install",
+      "sudo systemctl start docker",
+      "sudo systemctl enable docker",
+      "sudo usermod -aG docker ubuntu",
 
-    # ✅ Configure AWS credentials inside EC2
-    "mkdir -p ~/.aws",
-    "echo '[default]' > ~/.aws/credentials",
-    "echo 'aws_access_key_id=${var.aws_access_key_id}' >> ~/.aws/credentials",
-    "echo 'aws_secret_access_key=${var.aws_secret_access_key}' >> ~/.aws/credentials",
-    "echo '[default]' > ~/.aws/config",
-    "echo 'region=${var.aws_region}' >> ~/.aws/config",
+      # install AWS CLI v2
+      "curl https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip",
+      "unzip -o /tmp/awscliv2.zip -d /tmp",
+      "sudo /tmp/aws/install",
 
-    # ✅ ECR login
-    "aws ecr get-login-password --region ${var.aws_region} | sudo docker login --username AWS --password-stdin ${local.ecr_registry}",
+      # configure AWS credentials
+      "mkdir -p ~/.aws",
+      "echo '[default]' > ~/.aws/credentials",
+      "echo 'aws_access_key_id=${var.aws_access_key_id}' >> ~/.aws/credentials",
+      "echo 'aws_secret_access_key=${var.aws_secret_access_key}' >> ~/.aws/credentials",
+      "echo '[default]' > ~/.aws/config",
+      "echo 'region=${var.aws_region}' >> ~/.aws/config",
 
-    # ✅ Clean up old container if exists
-    "sudo docker stop strapi || true",
-    "sudo docker rm strapi || true",
+      # ECR login
+      "aws ecr get-login-password --region ${var.aws_region} | sudo docker login --username AWS --password-stdin ${local.ecr_registry}",
 
-    # ✅ Pull & Run new container
-    "sudo docker pull ${var.docker_image_uri}",
-    "sudo docker run -d --name strapi -p 1337:1337 ${var.docker_image_uri}"
-  ]
-}
+      # stop & remove old container
+      "sudo docker stop strapi || true",
+      "sudo docker rm strapi || true",
 
-  
+      # pull & run
+      "sudo docker pull ${var.docker_image_uri}",
+      "sudo docker run -d --name strapi -p 1337:1337 ${var.docker_image_uri}"
+    ]
+  }
+
   triggers = {
-    always_run = timestamp() #trigger every time apply 
+    always_run = timestamp()
   }
-
 }
+
