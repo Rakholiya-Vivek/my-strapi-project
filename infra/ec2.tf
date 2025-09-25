@@ -90,5 +90,9 @@ resource "null_resource" "deploy_strapi" {
       "sudo docker run -d --name strapi -p 1337:1337 ${var.docker_image_uri}"
     ]
   }
+  
+  triggers = {
+    always_run = timestamp() #trigger every time apply 
+  }
 
 }
