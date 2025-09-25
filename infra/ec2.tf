@@ -55,7 +55,7 @@ resource "null_resource" "deploy_strapi" {
   connection {
     type        = "ssh"
     host        = aws_instance.strapi.public_ip
-    user        = "ec2-user"
+    user        = "ubuntu"
     private_key = var.ssh_private_key
   }
 
