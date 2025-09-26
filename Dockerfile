@@ -23,19 +23,41 @@
 
 # for postgre db
 
-FROM node:20-alpine
+# FROM node:20-alpine
 
-WORKDIR /srv/app
+# WORKDIR /srv/app
 
-COPY package*.json ./
+# COPY package*.json ./
 
-RUN npm install
+# RUN npm install
 
-COPY . .
+# COPY . .
 
-EXPOSE 1337
+# EXPOSE 1337
 
 # CMD ["npm", "run", "develop"]
 
-CMD ["npm", "run", "start"]
 
+# Base image
+FROM node:20-alpine
+
+# Set working directory
+WORKDIR /srv/app
+
+# Copy package files first (for caching)
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy rest of the project
+COPY . .
+
+# Build the Strapi admin panel
+RUN npm run build
+
+# Expose port
+EXPOSE 1337
+
+# Start Strapi in production
+CMD ["npm", "run", "start"]
