@@ -1,0 +1,97 @@
+name: Build -> Push to ECR -> Terraform deploy (ECS Fargate)
+
+# Run on pushes to main (adjust branch as required)
+on:
+  push:
+    branches: [ main ]
+
+env:
+  AWS_REGION: ap-south-1
+  # repo name used in infra/variables.tf (default in your repo)
+  ECR_REPO: my-strapi-project-vivek-git
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get AWS account id
+        id: acct
+        run: |
+          echo "ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
+
+      - name: Ensure ECR repository exists
+        run: |
+          aws ecr describe-repositories --repository-names "${{ env.ECR_REPO }}" >/dev/null 2>&1 || \
+            aws ecr create-repository --repository-name "${{ env.ECR_REPO }}" --region ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} \
+            | docker login --username AWS --password-stdin ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+      - name: Build Docker image
+        # Use Dockerfile.prod if you have one; fallback to Dockerfile
+        run: |
+          TAG="$(echo $GITHUB_SHA | cut -c1-8)"
+          IMAGE="${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:${TAG}"
+          # Expose the image uri and tag to subsequent steps
+          echo "IMAGE_URI=$IMAGE" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+
+          # Build using Dockerfile.prod if present
+          if [ -f Dockerfile.prod ]; then
+            docker build -f Dockerfile.prod -t "${IMAGE}" .
+          else
+            docker build -t "${IMAGE}" .
+          fi
+
+      - name: Push image to ECR
+        run: |
+          docker push "${IMAGE_URI}"
+          # also push :latest tag if you like
+          docker tag "${IMAGE_URI}" "${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:latest" || true
+          docker push "${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:latest" || true
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Init (infra/)
+        working-directory: infra
+        run: >
+          terraform init -input=false -reconfigure
+
+      - name: Terraform Validate (infra/)
+        working-directory: infra
+        run: >
+          terraform validate || true
+
+      - name: Terraform Apply (set new image)
+        working-directory: infra
+        env:
+          # pass Strapi env secrets if used as TF vars
+          TF_VAR_app_keys: ${{ secrets.STRAPI_APP_KEYS }}
+          TF_VAR_admin_jwt_secret: ${{ secrets.STRAPI_ADMIN_JWT_SECRET }}
+          TF_VAR_api_token_salt: ${{ secrets.STRAPI_API_TOKEN_SALT }}
+          TF_VAR_jwt_secret: ${{ secrets.STRAPI_JWT_SECRET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          # Use docker_image_uri var override to update the task definition to the new image
+          echo "Applying terraform with docker_image_uri=${IMAGE_URI}"
+          terraform apply -auto-approve -var="docker_image_uri=${IMAGE_URI}"
