@@ -1,5 +1,6 @@
 resource "aws_ecr_repository" "strapi" {
-  name                 = var.repository_name
+  # name                 = var.repository_name
+  name                 = var.repository_name_git
   image_tag_mutability = "MUTABLE"
 
   lifecycle {

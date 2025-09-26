@@ -13,9 +13,14 @@ variable "ami" {
   default = "ami-02d26659fd82cf299"
 }
 
-variable "repository_name" {
+# variable "repository_name" {
+#   type    = string
+#   default = "my-strapi-project-vivek"
+# }
+
+variable "repository_name_git" {
   type    = string
-  default = "my-strapi-project-vivek"
+  default = "my-strapi-project-vivek-git"
 }
 
 variable "image_tag" {

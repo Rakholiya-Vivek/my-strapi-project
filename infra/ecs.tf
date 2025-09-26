@@ -52,7 +52,9 @@ data "aws_iam_role" "ecs_task_role" {
 # }
 
 resource "aws_cloudwatch_log_group" "strapi" {
-  name              = "/ecs/${var.repository_name}"
+  # name              = "/ecs/${var.repository_name}"
+    name              = "/ecs/${var.repository_name_git}"
+
   retention_in_days = 14
 }
 
@@ -64,7 +66,9 @@ variable "container_port" {
 }
 
 resource "aws_security_group" "alb_sg" {
-  name        = "${var.repository_name}-alb-sg"
+  # name        = "${var.repository_name}-alb-sg"
+
+  name        = "${var.repository_name_git}-alb-sg"
   description = "Allow HTTP to ALB"
   vpc_id      = data.aws_vpc.default.id
 
@@ -85,7 +89,9 @@ resource "aws_security_group" "alb_sg" {
 }
 
 resource "aws_security_group" "fargate_sg" {
-  name        = "${var.repository_name}-fargate-sg"
+  # name        = "${var.repository_name}-fargate-sg"
+
+  name        = "${var.repository_name_git}-fargate-sg"
   description = "Security group for Strapi Fargate service"
   vpc_id      = data.aws_vpc.default.id
 
@@ -105,7 +111,9 @@ resource "aws_security_group" "fargate_sg" {
 }
 
 resource "aws_lb" "alb" {
-  name               = "${var.repository_name}-alb"
+  # name               = "${var.repository_name}-alb"
+
+  name               = "${var.repository_name_git}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
@@ -113,7 +121,9 @@ resource "aws_lb" "alb" {
 }
 
 resource "aws_lb_target_group" "strapi_tg" {
-  name        = "${var.repository_name}-tg"
+  # name        = "${var.repository_name}-tg"
+
+  name        = "${var.repository_name_git}-tg"
   port        = var.container_port
   protocol    = "HTTP"
   vpc_id      = data.aws_vpc.default.id
@@ -166,7 +176,9 @@ locals {
 
 
 resource "aws_ecs_cluster" "this" {
-  name = "${var.repository_name}-cluster"
+  # name = "${var.repository_name}-cluster"
+
+  name = "${var.repository_name_git}-cluster"
 }
 
 resource "aws_ecs_task_definition" "strapi" {
@@ -182,7 +194,9 @@ resource "aws_ecs_task_definition" "strapi" {
     {
       name      = "strapi"
       # image     = local.image_uri
-      image = "145065858967.dkr.ecr.ap-south-1.amazonaws.com/my-strapi-project-vivek:latest"
+      # image = "145065858967.dkr.ecr.ap-south-1.amazonaws.com/my-strapi-project-vivek:latest"
+      image = "145065858967.dkr.ecr.ap-south-1.amazonaws.com/my-strapi-project-vivek-git:latest"
+
       essential = true
 
       portMappings = [
