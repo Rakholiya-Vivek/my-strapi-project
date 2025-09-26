@@ -1,15 +1,15 @@
-# resource "aws_ecr_repository" "strapi" {
-#   name                 = var.repository_name
-#   image_tag_mutability = "MUTABLE"
+resource "aws_ecr_repository" "strapi" {
+  name                 = var.repository_name
+  image_tag_mutability = "MUTABLE"
 
-#   lifecycle {
-#     prevent_destroy = true
-#   }
-# }
+  lifecycle {
+    prevent_destroy = true
+  }
+}
 
 # # S3 bucket for Terraform state
 # resource "aws_s3_bucket" "tf_state" {
-#   bucket = "my-terraform-state-bucket-vivek" # 🔴 change name (must be globally unique)
+#   bucket = "my-terraform-state-bucket-vivek" 
 
 #   lifecycle {
 #     prevent_destroy = true
