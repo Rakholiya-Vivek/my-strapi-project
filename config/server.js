@@ -7,4 +7,8 @@ module.exports = ({ env }) => ({
   webhooks: {
     populateRelations: env.bool('WEBHOOKS_POPULATE_RELATIONS', false),
   },
+
+  allowedHosts: [
+    'my-strapi-project-vivek-alb-1419655971.ap-south-1.elb.amazonaws.com',
+  ],
 });
