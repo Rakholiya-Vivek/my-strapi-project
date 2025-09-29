@@ -83,3 +83,33 @@ variable "ssh_user" {
 # variable "aws_secret_access_key" { 
 #   sensitive = true 
 #   }
+
+variable "container_port" {
+  description = "Port Strapi listens on inside container"
+  type        = number
+  default     = 1337
+}
+
+variable "service_name" {
+  type    = string
+  default = "strapi-service"
+}
+
+variable "task_cpu" {
+  type    = number
+  default = 512
+}
+
+variable "task_memory" {
+  type    = number
+  default = 1024
+}
+
+variable "desired_count" {
+  type    = number
+  default = 1
+}
+variable "db_password" {
+  type      = string
+  sensitive = true
+}
