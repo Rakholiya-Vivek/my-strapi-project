@@ -200,19 +200,30 @@ container_definitions = jsonencode([
         protocol      = "tcp"
       }
     ]
-    environment = [
-      { name = "DATABASE_CLIENT", value = "postgres" },
-      { name = "DATABASE_URL", value = "postgres://${aws_db_instance.strapi.username}:${var.db_password}@${aws_db_instance.strapi.address}:5432/${aws_db_instance.strapi.db_name}" },
-      { name = "DATABASE_HOST", value = aws_db_instance.strapi.address },
-      { name = "DATABASE_PORT", value = "5432" },
-      { name = "DATABASE_NAME", value = "strapidb" },
-      { name = "DATABASE_USERNAME", value = "strapiuser" },
-      { name = "DATABASE_POOL_MIN", value = "0" },
-      { name = "DATABASE_POOL_MAX", value = "5" },
-      { name = "DATABASE_SSL", value = "{\"rejectUnauthorized\":false}" },
-      { name = "DATABASE_PASSWORD", value = var.db_password }
+    # environment = [
+    #   { name = "DATABASE_CLIENT", value = "postgres" },
+    #   { name = "DATABASE_URL", value = "postgres://${aws_db_instance.strapi.username}:${var.db_password}@${aws_db_instance.strapi.address}:5432/${aws_db_instance.strapi.db_name}" },
+    #   { name = "DATABASE_HOST", value = aws_db_instance.strapi.address },
+    #   { name = "DATABASE_PORT", value = "5432" },
+    #   { name = "DATABASE_NAME", value = "strapidb" },
+    #   { name = "DATABASE_USERNAME", value = "strapiuser" },
+    #   { name = "DATABASE_POOL_MIN", value = "0" },
+    #   { name = "DATABASE_POOL_MAX", value = "5" },
+    #   { name = "DATABASE_SSL", value = "{\"rejectUnauthorized\":false}" },
+    #   { name = "DATABASE_PASSWORD", value = var.db_password }
 
-    ]
+    # ]
+    environment = [
+  {
+    name  = "DATABASE_CLIENT"
+    value = "postgres"
+  },
+  {
+    name  = "DATABASE_URL"
+    value = "postgres://strapiuser:${var.db_password}@${aws_db_instance.strapi.address}:5432/strapidb?ssl=true&sslmode=require"
+  }
+]
+
     logConfiguration = {
       logDriver = "awslogs"
       options = {
