@@ -2,12 +2,12 @@ name: Build -> Push to ECR -> Terraform deploy (ECS Fargate)
 
 # Run on pushes to main (adjust branch as required)
 
-on:
-  workflow_dispatch:
-
 # on:
-#   push:
-#     branches: [ main ]
+#   workflow_dispatch:
+
+on:
+  push:
+    branches: [ main ]
 
 env:
   AWS_REGION: ap-south-1
