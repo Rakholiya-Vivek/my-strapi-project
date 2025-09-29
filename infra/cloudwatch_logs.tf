@@ -7,6 +7,7 @@ resource "aws_cloudwatch_log_group" "strapi" {
     Name = "${var.repository_name_git}-ecs-logs"
     Project = var.repository_name_git
   }
+  depends_on = [ aws_ecs_service.strapi ]
 }
 
 resource "aws_cloudwatch_dashboard" "ecs_dashboard" {
@@ -77,6 +78,7 @@ resource "aws_cloudwatch_dashboard" "ecs_dashboard" {
       }
     ]
   })
+  depends_on = [ aws_ecs_service.strapi ]
 }
 
 

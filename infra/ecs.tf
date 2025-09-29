@@ -82,6 +82,8 @@ resource "aws_lb" "alb" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = data.aws_subnets.default.ids
+
+  depends_on = [ aws_security_group.alb_sg, aws_lb_target_group.strapi_tg]
 }
 
 resource "aws_lb_target_group" "strapi_tg" {
@@ -112,6 +114,7 @@ resource "aws_lb_listener" "http" {
     type             = "forward"
     target_group_arn = aws_lb_target_group.strapi_tg.arn
   }
+  depends_on = [ aws_lb.alb ]
 }
 
 
@@ -131,6 +134,7 @@ resource "aws_ecs_cluster" "this" {
     name  = "containerInsights"
     value = "enabled"
   }
+  depends_on = [ aws_db_instance.strapi ]
 }
 
 resource "aws_ecs_task_definition" "strapi" {
@@ -216,7 +220,7 @@ container_definitions = jsonencode([
     }
   }
 ])
-
+depends_on = [ aws_ecs_cluster.this ]
 }
 
 resource "aws_ecs_service" "strapi" {
@@ -238,6 +242,6 @@ resource "aws_ecs_service" "strapi" {
     container_port   = var.container_port
   }
 
-  depends_on = [aws_lb_listener.http]
+  depends_on = [aws_lb_listener.http , aws_ecs_task_definition.strapi]
 }
 

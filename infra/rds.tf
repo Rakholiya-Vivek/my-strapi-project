@@ -26,6 +26,8 @@ resource "aws_security_group" "strapi_db" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  depends_on = [ aws_security_group.alb_sg ]
 }
 
 
@@ -46,5 +48,7 @@ resource "aws_db_instance" "strapi" {
   vpc_security_group_ids  = [aws_security_group.strapi_db.id]
 
   skip_final_snapshot     = true
+
+  depends_on = [ aws_db_subnet_group.strapi ]
 }
 
