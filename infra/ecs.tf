@@ -207,6 +207,8 @@ container_definitions = jsonencode([
       { name = "DATABASE_PORT", value = "5432" },
       { name = "DATABASE_NAME", value = "strapidb" },
       { name = "DATABASE_USERNAME", value = "strapiuser" },
+      { name = "DATABASE_POOL_MIN", value = "0" },
+      { name = "DATABASE_POOL_MAX", value = "5" },
       { name = "DATABASE_PASSWORD", value = var.db_password }
 
     ]
