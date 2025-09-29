@@ -17,7 +17,7 @@ resource "aws_security_group" "strapi_db" {
     from_port       = 5432
     to_port         = 5432
     protocol        = "tcp"
-    security_groups = [aws_security_group.alb_sg.id] # ECS SG
+    security_groups = [aws_security_group.fargate_sg.id] # ECS SG
   }
 
   egress {
