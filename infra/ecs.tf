@@ -209,7 +209,7 @@ container_definitions = jsonencode([
       { name = "DATABASE_USERNAME", value = "strapiuser" },
       { name = "DATABASE_POOL_MIN", value = "0" },
       { name = "DATABASE_POOL_MAX", value = "5" },
-      { name = "DATABASE_SSL", value = "true" },
+      { name = "DATABASE_SSL", value = "{\"rejectUnauthorized\":false}" },
       { name = "DATABASE_PASSWORD", value = var.db_password }
 
     ]
