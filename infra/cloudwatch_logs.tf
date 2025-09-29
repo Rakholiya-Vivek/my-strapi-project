@@ -119,12 +119,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
     ignore_changes = [alarm_actions] # optional to keep manual actions
   }
 
-  dynamic "alarm_actions" {
-    for_each = var.sns_topic_arn == "" ? [] : [var.sns_topic_arn]
-    content {
-      alarm_actions = [alarm_actions.value]
-    }
-  }
+  alarm_actions = [aws_sns_topic.alerts.arn] 
 }
 
 # Memory high alarm (AWS/ECS)
