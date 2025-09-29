@@ -34,7 +34,6 @@ resource "aws_security_group" "strapi_db" {
 resource "aws_db_instance" "strapi" {
   identifier              = "strapi-postgres-vivek"
   engine                  = "postgres"
-  engine_version          = "15.3"
   instance_class          = "db.t3.micro"
   allocated_storage       = 20
   max_allocated_storage   = 100
