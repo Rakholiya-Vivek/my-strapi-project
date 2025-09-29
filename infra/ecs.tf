@@ -214,15 +214,11 @@ container_definitions = jsonencode([
 
     # ]
     environment = [
-  {
-    name  = "DATABASE_CLIENT"
-    value = "postgres"
-  },
-  {
-    name  = "DATABASE_URL"
-    value = "postgres://strapiuser:${var.db_password}@${aws_db_instance.strapi.address}:5432/strapidb?ssl=true&sslmode=require"
-  }
+  { name = "DATABASE_CLIENT", value = "postgres" },
+  { name = "DATABASE_URL", value = "postgres://strapiuser:${var.db_password}@${aws_db_instance.strapi.address}:5432/strapidb?ssl=true&sslmode=require" },
+  { name = "NODE_TLS_REJECT_UNAUTHORIZED", value = "0" }
 ]
+
 
     logConfiguration = {
       logDriver = "awslogs"
