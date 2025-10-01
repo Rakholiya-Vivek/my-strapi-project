@@ -238,7 +238,19 @@ resource "aws_ecs_service" "strapi" {
   cluster         = aws_ecs_cluster.this.id
   task_definition = aws_ecs_task_definition.strapi.arn
   desired_count   = var.desired_count
-  launch_type     = "FARGATE"
+  # launch_type     = "FARGATE"
+
+  # ✅ add this instead
+  capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 1
+  }
+
+  # Optional: fallback to normal Fargate if no Spot capacity is available
+  # capacity_provider_strategy {
+  #   capacity_provider = "FARGATE"
+  #   weight            = 1
+  # }
 
   network_configuration {
     subnets         = data.aws_subnets.default.ids
