@@ -47,28 +47,28 @@ jobs:
           aws ecr get-login-password --region ${{ env.AWS_REGION }} \
             | docker login --username AWS --password-stdin ${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
-      - name: Build Docker image
-        # Use Dockerfile.prod if you have one; fallback to Dockerfile
-        run: |
-          TAG="$(echo $GITHUB_SHA | cut -c1-8)"
-          IMAGE="${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:${TAG}"
-          # Expose the image uri and tag to subsequent steps
-          echo "IMAGE_URI=$IMAGE" >> $GITHUB_ENV
-          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+      # - name: Build Docker image
+      #   # Use Dockerfile.prod if you have one; fallback to Dockerfile
+      #   run: |
+      #     TAG="$(echo $GITHUB_SHA | cut -c1-8)"
+      #     IMAGE="${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:${TAG}"
+      #     # Expose the image uri and tag to subsequent steps
+      #     echo "IMAGE_URI=$IMAGE" >> $GITHUB_ENV
+      #     echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
 
-          # Build using Dockerfile.prod if present
-          if [ -f Dockerfile.prod ]; then
-            docker build -f Dockerfile.prod -t "${IMAGE}" .
-          else
-            docker build -t "${IMAGE}" .
-          fi
+      #     # Build using Dockerfile.prod if present
+      #     if [ -f Dockerfile.prod ]; then
+      #       docker build -f Dockerfile.prod -t "${IMAGE}" .
+      #     else
+      #       docker build -t "${IMAGE}" .
+      #     fi
 
-      - name: Push image to ECR
-        run: |
-          docker push "${IMAGE_URI}"
-          # also push :latest tag if you like
-          docker tag "${IMAGE_URI}" "${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:latest" || true
-          docker push "${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:latest" || true
+      # - name: Push image to ECR
+      #   run: |
+      #     docker push "${IMAGE_URI}"
+      #     # also push :latest tag if you like
+      #     docker tag "${IMAGE_URI}" "${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:latest" || true
+      #     docker push "${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:latest" || true
 
          # -------------------------------
       # Step 5: Register New Task Definition
@@ -87,7 +87,7 @@ jobs:
       # -------------------------------
       - name: Trigger Blue/Green deployment
         run: |
-          sed "s|<TASK_DEF_ARN>|${TASK_DEF_ARN}|g" appspec.yml > appspec-rendered.yml
+          sed "s|<TASK_DEF_ARN>|\"${TASK_DEF_ARN}\"|g" appspec.yml > appspec-rendered.yml
 
           aws deploy create-deployment \
             --application-name strapi-codedeploy-app-vivek \
