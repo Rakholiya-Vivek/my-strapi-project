@@ -1,6 +1,6 @@
-# ECS task execution role (pull images, write logs)
+# # ECS task execution role (pull images, write logs)
 # resource "aws_iam_role" "ecs_task_execution_role" {
-#   name = "${var.repository_name}-ecs-exec-role"
+#   name = "${var.repository_name_git}-ecs-exec-role-alt"
 
 #   assume_role_policy = jsonencode({
 #     Version = "2012-10-17"
@@ -320,6 +320,10 @@ resource "aws_ecs_service" "strapi" {
     container_name   = "strapi"
     container_port   = var.container_port
   }
+
+  lifecycle {                            # Terraform will ignore to update service itselt if changes will come in the task definition (New revision )
+  ignore_changes = [task_definition]
+}
 
   depends_on = [aws_lb_listener.http , aws_ecs_task_definition.strapi]
 }
