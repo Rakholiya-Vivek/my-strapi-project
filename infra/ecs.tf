@@ -195,8 +195,8 @@ resource "aws_ecs_task_definition" "strapi" {
   network_mode             = "awsvpc"
   cpu                      = tostring(var.task_cpu)
   memory                   = tostring(var.task_memory)
-  execution_role_arn = data.aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn      = data.aws_iam_role.ecs_task_role.arn
+  execution_role_arn = "arn:aws:iam::145065858967:role/my-strapi-project-vivek-ecs-exec-role-alt"
+  task_role_arn      = "arn:aws:iam::145065858967:role/my-strapi-project-vivek-task-role-alt"
 
 #   container_definitions = jsonencode([
 #     {
