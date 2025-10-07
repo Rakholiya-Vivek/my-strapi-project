@@ -86,18 +86,22 @@ jobs:
       # Step 6: Trigger CodeDeploy
       # -------------------------------
 
-      - name: Cancel existing active deployment (if any)
+      - name: Cancel ALL active deployments (if any)
         run: |
-          DEPLOY_ID=$(aws deploy list-deployments \
+          DEPLOY_IDS=$(aws deploy list-deployments \
             --application-name strapi-codedeploy-app-vivek \
             --deployment-group-name strapi-ecs-deployment-group-vivek \
             --include-only-statuses Created Queued InProgress \
-            --query 'deployments[0]' --output text)
-          if [ "$DEPLOY_ID" != "None" ]; then
-            echo "Stopping previous deployment: $DEPLOY_ID"
-            aws deploy stop-deployment --deployment-id $DEPLOY_ID --auto-rollback-enabled || true
-          fi
+            --query 'deployments' --output text)
 
+          if [ "$DEPLOY_IDS" != "None" ] && [ -n "$DEPLOY_IDS" ]; then
+            for ID in $DEPLOY_IDS; do
+              echo "Stopping active deployment: $ID"
+              aws deploy stop-deployment --deployment-id "$ID" --auto-rollback-enabled || true
+            done
+          else
+            echo "✅ No active deployments found."
+          fi
 
 
 
