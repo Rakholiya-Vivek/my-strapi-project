@@ -87,10 +87,12 @@ jobs:
       # -------------------------------
       - name: Trigger Blue/Green deployment
         run: |
-          sed "s|<TASK_DEF_ARN>|\"${TASK_DEF_ARN}\"|g" appspec.yml > appspec-rendered.yml
+          # ❗ FIX 1 — no quotes around ARN (CodeDeploy expects plain ARN, not JSON string)
+          sed "s|<TASK_DEF_ARN>|${TASK_DEF_ARN}|g" appspec.yml > appspec-rendered.yml
 
+          # ❗ FIX 2 — use ECSAllAtOnce or Canary (must match deployment_group)
           aws deploy create-deployment \
             --application-name strapi-codedeploy-app-vivek \
             --deployment-group-name strapi-ecs-deployment-group-vivek \
-            --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
+            --deployment-config-name CodeDeployDefault.ECSAllAtOnce \
             --revision "$(jq -n --arg content "$(cat appspec-rendered.yml)" '{revisionType:"AppSpecContent", appSpecContent:{content:$content}}')"
