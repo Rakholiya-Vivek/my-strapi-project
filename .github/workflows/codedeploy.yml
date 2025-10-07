@@ -85,6 +85,22 @@ jobs:
       # -------------------------------
       # Step 6: Trigger CodeDeploy
       # -------------------------------
+
+      - name: Cancel existing active deployment (if any)
+        run: |
+          DEPLOY_ID=$(aws deploy list-deployments \
+            --application-name strapi-codedeploy-app-vivek \
+            --deployment-group-name strapi-ecs-deployment-group-vivek \
+            --include-only-statuses Created Queued InProgress \
+            --query 'deployments[0]' --output text)
+          if [ "$DEPLOY_ID" != "None" ]; then
+            echo "Stopping previous deployment: $DEPLOY_ID"
+            aws deploy stop-deployment --deployment-id $DEPLOY_ID --auto-rollback-enabled || true
+          fi
+
+
+
+
       - name: Trigger Blue/Green deployment
         run: |
           # ❗ FIX 1 — no quotes around ARN (CodeDeploy expects plain ARN, not JSON string)
