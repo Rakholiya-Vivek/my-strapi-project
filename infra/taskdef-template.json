@@ -1,0 +1,46 @@
+{
+  "family": "strapi-service",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "data.aws_iam_role.ecs_task_execution_role.arn",
+  "taskRoleArn": "data.aws_iam_role.ecs_task_role.arn",
+
+   "containerDefinitions": [
+    {
+      "name": "strapi",
+      "image": "<IMAGE_URI>",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 1337,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "DATABASE_CLIENT",
+          "value": "postgres"
+        },
+        {
+          "name": "DATABASE_URL",
+          "value": "postgres://strapiuser:${var.db_password}@${aws_db_instance.strapi.address}:5432/strapidb?ssl=true&sslmode=require"
+        },
+        {
+          "name": "NODE_TLS_REJECT_UNAUTHORIZED",
+          "value": "0"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/strapi", 
+          "awslogs-region": "ap-south-1",
+          "awslogs-stream-prefix": "ecs/strapi"
+        }
+      }
+    }
+  ]
+  
+}

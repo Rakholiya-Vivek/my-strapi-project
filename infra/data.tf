@@ -20,6 +20,10 @@ data "aws_iam_role" "ecs_task_role" {
   name = "my-strapi-project-vivek-task-role-alt"
 }
 
+data "aws_iam_role" "codedeploy_role" {
+  name = "codedeploy-ecs-service-role-vivekk"
+}
+
 data "aws_security_group" "existing_sg" {
   name   = "pearlt_vivek_sg"  # The name of the security group
   vpc_id = "vpc-01b35def73b166fdc"  # Replace with your actual VPC ID

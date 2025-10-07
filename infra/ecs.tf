@@ -44,6 +44,14 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "Allow HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -83,40 +91,84 @@ resource "aws_lb" "alb" {
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = data.aws_subnets.default.ids
 
-  depends_on = [ aws_security_group.alb_sg, aws_lb_target_group.strapi_tg]
+  depends_on = [ aws_security_group.alb_sg]
 }
 
-resource "aws_lb_target_group" "strapi_tg" {
-  # name        = "${var.repository_name}-tg"
+# resource "aws_lb_target_group" "strapi_tg" {
+#   # name        = "${var.repository_name}-tg"
 
-  name        = "${var.repository_name_git}-tg"
-  port        = var.container_port
-  protocol    = "HTTP"
-  vpc_id      = data.aws_vpc.default.id
-  target_type = "ip"
+#   name        = "${var.repository_name_git}-tg"
+#   port        = var.container_port
+#   protocol    = "HTTP"
+#   vpc_id      = data.aws_vpc.default.id
+#   target_type = "ip"
+
+#   health_check {
+#     path                = "/"
+#     matcher             = "200-399"
+#     interval            = 30
+#     timeout             = 5
+#     healthy_threshold   = 2
+#     unhealthy_threshold = 2
+#   }
+# }
+
+# resource "aws_lb_listener" "http" {
+#   load_balancer_arn = aws_lb.alb.arn
+#   port              = 80
+#   protocol          = "HTTP"
+
+#   default_action {
+#     type             = "forward"
+#     target_group_arn = aws_lb_target_group.strapi_tg.arn
+#   }
+#   depends_on = [ aws_lb.alb ]
+# }
+resource "aws_lb_target_group" "blue" {
+  name     = "tg-strapi-blue-vivek"
+  port     = var.container_port
+  protocol = "HTTP"
+  target_type = "ip"         # for Fargate
+  vpc_id   = data.aws_vpc.default.id
 
   health_check {
-    path                = "/"
-    matcher             = "200-399"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
+    path = "/"
+    matcher = "200-399"
+    interval = 30
+    timeout = 5
+    healthy_threshold = 2
     unhealthy_threshold = 2
   }
 }
 
+resource "aws_lb_target_group" "green" {
+  name     = "tg-strapi-green-vivek"
+  port     = var.container_port
+  protocol = "HTTP"
+  target_type = "ip"
+  vpc_id   = data.aws_vpc.default.id
+
+  health_check {
+    path = "/"
+    matcher = "200-399"
+    interval = 30
+    timeout = 5
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+  }
+}
+
+# HTTP listener (port 80) — default forward to *blue* target group
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.alb.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.strapi_tg.arn
+    type = "forward"
+    target_group_arn = aws_lb_target_group.blue.arn
   }
-  depends_on = [ aws_lb.alb ]
 }
-
 
 
 locals {
@@ -238,19 +290,23 @@ resource "aws_ecs_service" "strapi" {
   cluster         = aws_ecs_cluster.this.id
   task_definition = aws_ecs_task_definition.strapi.arn
   desired_count   = var.desired_count
-  # launch_type     = "FARGATE"
+  launch_type     = "FARGATE"
 
   # ✅ add this instead
-  capacity_provider_strategy {
-    capacity_provider = "FARGATE_SPOT"
-    weight            = 1
-  }
+  # capacity_provider_strategy {
+  #   capacity_provider = "FARGATE_SPOT"
+  #   weight            = 1
+  # }
 
   # Optional: fallback to normal Fargate if no Spot capacity is available
   # capacity_provider_strategy {
   #   capacity_provider = "FARGATE"
   #   weight            = 1
   # }
+
+    deployment_controller {
+    type = "CODE_DEPLOY"
+  }
 
   network_configuration {
     subnets         = data.aws_subnets.default.ids
@@ -259,7 +315,8 @@ resource "aws_ecs_service" "strapi" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.strapi_tg.arn
+    # target_group_arn = aws_lb_target_group.strapi_tg.arn
+    target_group_arn = aws_lb_target_group.blue.arn
     container_name   = "strapi"
     container_port   = var.container_port
   }

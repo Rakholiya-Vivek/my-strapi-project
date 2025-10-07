@@ -29,6 +29,6 @@ output "ecs_service_name" {
   value = aws_ecs_service.strapi.name
 }
 
-output "alb_target_group_arn" {
-  value = aws_lb_target_group.strapi_tg.arn
-}
+# output "alb_target_group_arn" {
+#   value = aws_lb_target_group.strapi_tg.arn
+# }
