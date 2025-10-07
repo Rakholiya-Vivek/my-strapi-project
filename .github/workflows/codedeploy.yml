@@ -93,4 +93,4 @@ jobs:
             --application-name strapi-codedeploy-app-vivek \
             --deployment-group-name strapi-ecs-deployment-group-vivek \
             --deployment-config-name CodeDeployDefault.ECSCanary10Percent5Minutes \
-            --revision revisionType=AppSpecContent,appSpecContent={content="$(cat appspec-rendered.yml)"}
+            --revision "$(jq -n --arg content "$(cat appspec-rendered.yml)" '{revisionType:"AppSpecContent", appSpecContent:{content:$content}}')"
