@@ -12,13 +12,13 @@ data "aws_subnets" "default" {
   }
 }
 
-data "aws_iam_role" "ecs_task_execution_role" {
-  name = "my-strapi-project-vivek-ecs-exec-role-alt"
-}
+# data "aws_iam_role" "ecs_task_execution_role" {
+#   name = "my-strapi-project-vivek-ecs-exec-role-alt"
+# }
 
-data "aws_iam_role" "ecs_task_role" {
-  name = "my-strapi-project-vivek-task-role-alt"
-}
+# data "aws_iam_role" "ecs_task_role" {
+#   name = "my-strapi-project-vivek-task-role-alt"
+# }
 
 data "aws_iam_role" "codedeploy_role" {
   name = "codedeploy-ecs-service-role-vivekk"
