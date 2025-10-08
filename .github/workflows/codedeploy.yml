@@ -78,10 +78,10 @@ jobs:
           docker push "${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:latest" || true
 
       
-      # -------------------------------
-      # Step 5: Register New Task Definition
-      # -------------------------------
-      - name: Register new ECS task definition from existing
+      # ---------------------------------------
+      # Step 5: Register new ECS Task Definition
+      # ---------------------------------------
+      - name: Register new ECS task definition
         run: |
           FAMILY="strapi-service"
           IMAGE_URI="${IMAGE_URI}"
@@ -90,12 +90,18 @@ jobs:
           DB_HOST="${{ secrets.DB_HOST }}"
           DB_NAME="strapidb"
 
+          # Encode special characters in DB password
           ENCODED_PW=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${DB_PASSWORD}'''))")
           DB_URL="postgres://${DB_USER}:${ENCODED_PW}@${DB_HOST}:5432/${DB_NAME}?ssl=true&sslmode=require"
           echo "Using database URL: $DB_URL"
 
-          CURRENT_DEF=$(aws ecs describe-task-definition --task-definition $FAMILY)
+          # Try to get existing task definition
+          if ! CURRENT_DEF=$(aws ecs describe-task-definition --task-definition $FAMILY 2>/dev/null); then
+            echo "⚠️ No existing task definition found for $FAMILY. Please create one first in ECS."
+            exit 1
+          fi
 
+          # Create new task definition JSON
           NEW_DEF=$(echo "$CURRENT_DEF" | jq \
             --arg IMAGE "$IMAGE_URI" \
             --arg DB_URL "$DB_URL" \
@@ -124,10 +130,10 @@ jobs:
           echo "✅ Registered new task definition: $TASK_DEF_ARN"
           echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
 
-      # -------------------------------
-      # Step 6: Trigger CodeDeploy
-      # -------------------------------
-      - name: Cancel ALL active deployments (if any)
+      # ---------------------------------------
+      # Step 6: Trigger Blue/Green Deployment
+      # ---------------------------------------
+      - name: Cancel any active deployments
         run: |
           DEPLOY_IDS=$(aws deploy list-deployments \
             --application-name strapi-codedeploy-app-vivek \
@@ -137,14 +143,14 @@ jobs:
 
           if [ "$DEPLOY_IDS" != "None" ] && [ -n "$DEPLOY_IDS" ]; then
             for ID in $DEPLOY_IDS; do
-              echo "Stopping active deployment: $ID"
+              echo "Stopping deployment: $ID"
               aws deploy stop-deployment --deployment-id "$ID" --auto-rollback-enabled || true
             done
           else
             echo "✅ No active deployments found."
           fi
 
-      - name: Trigger Blue/Green deployment
+      - name: Trigger Blue/Green deployment via CodeDeploy
         run: |
           sed "s|<TASK_DEF_ARN>|${TASK_DEF_ARN}|g" appspec.yml > appspec-rendered.yml
 
