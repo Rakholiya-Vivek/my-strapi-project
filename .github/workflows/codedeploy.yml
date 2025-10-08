@@ -81,7 +81,7 @@ jobs:
       # -------------------------------
       # Step 5: Register New Task Definition
       # -------------------------------
-            - name: Register new ECS task definition from existing
+      - name: Register new ECS task definition from existing
         env:
           FAMILY: "strapi-service"
           DB_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
