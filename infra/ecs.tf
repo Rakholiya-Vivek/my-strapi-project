@@ -196,7 +196,7 @@ resource "aws_ecs_task_definition" "strapi" {
   cpu                      = tostring(var.task_cpu)
   memory                   = tostring(var.task_memory)
   execution_role_arn = "arn:aws:iam::145065858967:role/my-strapi-project-vivek-ecs-exec-role-alt"
-  # task_role_arn      = "arn:aws:iam::145065858967:role/my-strapi-project-vivek-task-role-alt"
+  task_role_arn      = "arn:aws:iam::145065858967:role/my-strapi-project-vivek-task-role-alt"
 
 #   container_definitions = jsonencode([
 #     {
@@ -245,11 +245,7 @@ container_definitions = jsonencode([
     # image     = local.image_uri
     image = "145065858967.dkr.ecr.ap-south-1.amazonaws.com/my-strapi-project-vivek-git:latest"
     essential = true
-    vars = {
-    image_uri     = aws_ecr_repository.strapi.repository_url
-    db_password   = var.db_password
-    db_address    = aws_db_instance.strapi.address
-  }
+    
     portMappings = [
       {
         containerPort = 1337

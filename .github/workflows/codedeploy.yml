@@ -82,24 +82,28 @@ jobs:
       # Step 5: Register New Task Definition
       # -------------------------------
       - name: Register new ECS task definition from existing
-        run: |
-          FAMILY="strapi-service"  # must match var.service_name in Terraform
+  run: |
+    FAMILY="strapi-service"
 
-          # Get current task definition JSON
-          CURRENT_DEF=$(aws ecs describe-task-definition --task-definition $FAMILY)
+    CURRENT_DEF=$(aws ecs describe-task-definition --task-definition $FAMILY)
 
-          # Replace image URI and remove unnecessary keys
-          NEW_DEF=$(echo "$CURRENT_DEF" | jq --arg IMAGE "${IMAGE_URI}" '
-            .taskDefinition
-            | .containerDefinitions[0].image = $IMAGE
-            | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
-          ')
+    NEW_DEF=$(echo "$CURRENT_DEF" | jq \
+      --arg IMAGE "${IMAGE_URI}" \
+      --arg DB_URL "postgres://strapiuser:${{ secrets.DATABASE_PASSWORD }}@${{ secrets.DB_HOST }}:5432/strapidb?ssl=true&sslmode=require" \
+      '
+      .taskDefinition
+      | .containerDefinitions[0].image = $IMAGE
+      | (.containerDefinitions[0].environment[] | select(.name=="DATABASE_URL")).value = $DB_URL
+      | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+      ')
 
-          echo "$NEW_DEF" > new-taskdef.json
+    echo "$NEW_DEF" > new-taskdef.json
 
-          TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
-          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
-          echo "✅ Registered new task definition: $TASK_DEF_ARN"
+    TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
+
+    echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+    echo "✅ Registered new task definition: $TASK_DEF_ARN"
+
 
       # -------------------------------
       # Step 6: Trigger CodeDeploy
