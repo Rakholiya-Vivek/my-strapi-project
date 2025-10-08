@@ -4,8 +4,8 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
-  "executionRoleArn": "data.aws_iam_role.ecs_task_execution_role.arn",
-  "taskRoleArn": "data.aws_iam_role.ecs_task_role.arn",
+  "executionRoleArn": "arn:aws:iam::145065858967:role/my-strapi-project-vivek-ecs-exec-role-alt",
+  "taskRoleArn": "arn:aws:iam::145065858967:role/my-strapi-project-vivek-task-role-alt",
 
    "containerDefinitions": [
     {
