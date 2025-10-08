@@ -13,6 +13,13 @@ env:
   AWS_REGION: ap-south-1
   # repo name used in infra/variables.tf (default in your repo)
   ECR_REPO: my-strapi-project-vivek-git
+  TF_VAR_db_password: ${{ secrets.DATABASE_PASSWORD }}
+  TF_VAR_app_keys: ${{ secrets.STRAPI_APP_KEYS }}
+  TF_VAR_admin_jwt_secret: ${{ secrets.STRAPI_ADMIN_JWT_SECRET }}
+  TF_VAR_api_token_salt: ${{ secrets.STRAPI_API_TOKEN_SALT }}
+  TF_VAR_jwt_secret: ${{ secrets.STRAPI_JWT_SECRET }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
 jobs:
   build-and-deploy:

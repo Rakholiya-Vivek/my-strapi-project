@@ -25,7 +25,7 @@
         },
         {
           "name": "DATABASE_URL",
-          "value": "postgres://strapiuser:${var.db_password}@${aws_db_instance.strapi.address}:5432/strapidb?ssl=true&sslmode=require"
+          "value": "postgres://strapiuser:${db_password}@${db_address}:5432/strapidb?ssl=true&sslmode=require"
         },
         {
           "name": "NODE_TLS_REJECT_UNAUTHORIZED",

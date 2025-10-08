@@ -28,3 +28,11 @@ data "aws_security_group" "existing_sg" {
   name   = "pearlt_vivek_sg"  # The name of the security group
   vpc_id = "vpc-01b35def73b166fdc"  # Replace with your actual VPC ID
 }
+data "template_file" "task_definition" {
+  template = file("${path.module}/taskdef-template.json")
+  vars = {
+    image_uri     = aws_ecr_repository.strapi.repository_url
+    db_password   = var.db_password
+    db_address    = aws_db_instance.strapi.address
+  }
+}
