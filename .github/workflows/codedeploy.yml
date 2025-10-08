@@ -82,60 +82,47 @@ jobs:
       # Step 5: Register New Task Definition
       # -------------------------------
       - name: Register new ECS task definition from existing
-  run: |
-    # === Configuration ===
-    FAMILY="my-strapi-project-vivek-git"  # Must match your ECS service family name
-    IMAGE_URI="${{ steps.build_image.outputs.image_uri }}"
-    DB_USER="strapiuser"
-    DB_PASSWORD="${{ secrets.DATABASE_PASSWORD }}"
-    DB_HOST="${{ secrets.DB_HOST }}"
-    DB_NAME="strapidb"
+        run: |
+          FAMILY="my-strapi-project-vivek-git"
+          IMAGE_URI="${IMAGE_URI}"
+          DB_USER="strapiuser"
+          DB_PASSWORD="${{ secrets.DATABASE_PASSWORD }}"
+          DB_HOST="${{ secrets.DB_HOST }}"
+          DB_NAME="strapidb"
 
-    # === Encode special characters in DB password ===
-    ENCODED_PW=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${DB_PASSWORD}'''))")
+          ENCODED_PW=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${DB_PASSWORD}'''))")
+          DB_URL="postgres://${DB_USER}:${ENCODED_PW}@${DB_HOST}:5432/${DB_NAME}?ssl=true&sslmode=require"
+          echo "Using database URL: $DB_URL"
 
-    # === Build proper DATABASE_URL ===
-    DB_URL="postgres://${DB_USER}:${ENCODED_PW}@${DB_HOST}:5432/${DB_NAME}?ssl=true&sslmode=require"
+          CURRENT_DEF=$(aws ecs describe-task-definition --task-definition $FAMILY)
 
-    echo "Using database URL: $DB_URL"
+          NEW_DEF=$(echo "$CURRENT_DEF" | jq \
+            --arg IMAGE "$IMAGE_URI" \
+            --arg DB_URL "$DB_URL" \
+            '.taskDefinition
+            | .containerDefinitions[0].image = $IMAGE
+            | .containerDefinitions[0].environment |= map(
+                if .name == "DATABASE_URL" then .value = $DB_URL else . end
+              )
+            | del(
+                .taskDefinitionArn,
+                .revision,
+                .status,
+                .requiresAttributes,
+                .compatibilities,
+                .registeredAt,
+                .registeredBy
+              )')
 
-    # === Get current ECS task definition ===
-    CURRENT_DEF=$(aws ecs describe-task-definition --task-definition $FAMILY)
+          echo "$NEW_DEF" > new-taskdef.json
 
-    # === Create new task definition JSON ===
-    NEW_DEF=$(echo "$CURRENT_DEF" | jq \
-      --arg IMAGE "$IMAGE_URI" \
-      --arg DB_URL "$DB_URL" \
-      '.taskDefinition
-      | .containerDefinitions[0].image = $IMAGE
-      | .containerDefinitions[0].environment |= map(
-          if .name == "DATABASE_URL" then .value = $DB_URL else . end
-        )
-      | del(
-          .taskDefinitionArn,
-          .revision,
-          .status,
-          .requiresAttributes,
-          .compatibilities,
-          .registeredAt,
-          .registeredBy
-        )')
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://new-taskdef.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
 
-    # === Save and register new task definition ===
-    echo "$NEW_DEF" > new-taskdef.json
-
-    TASK_DEF_ARN=$(aws ecs register-task-definition \
-      --cli-input-json file://new-taskdef.json \
-      --query 'taskDefinition.taskDefinitionArn' \
-      --output text)
-
-    echo "✅ Registered new task definition: $TASK_DEF_ARN"
-
-    # === Export ARN for CodeDeploy ===
-    echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
-
-
-
+          echo "✅ Registered new task definition: $TASK_DEF_ARN"
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
 
       # -------------------------------
       # Step 6: Trigger CodeDeploy
