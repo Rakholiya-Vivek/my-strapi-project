@@ -81,7 +81,7 @@ jobs:
       # -------------------------------
       # Step 5: Register New Task Definition
       # -------------------------------
-      - name: Register new ECS task definition from existing
+            - name: Register new ECS task definition from existing
         env:
           FAMILY: "strapi-service"
           DB_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
@@ -98,7 +98,8 @@ jobs:
             '
             .taskDefinition
             | .containerDefinitions[0].image = $IMAGE
-            | (.containerDefinitions[0].environment[] | select(.name=="DATABASE_URL")).value = $DB_URL
+            | (.containerDefinitions[0].environment |=
+                map(if .name == "DATABASE_URL" then .value = $DB_URL else . end))
             | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
             ')
 
@@ -112,6 +113,7 @@ jobs:
 
           echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
           echo "✅ Registered new task definition: $TASK_DEF_ARN"
+
 
 
       # -------------------------------
