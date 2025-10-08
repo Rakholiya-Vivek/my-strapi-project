@@ -83,7 +83,7 @@ jobs:
       # -------------------------------
       - name: Register new ECS task definition from existing
         run: |
-          FAMILY="my-strapi-project-vivek-git"
+          FAMILY="strapi-service"
           IMAGE_URI="${IMAGE_URI}"
           DB_USER="strapiuser"
           DB_PASSWORD="${{ secrets.DATABASE_PASSWORD }}"
