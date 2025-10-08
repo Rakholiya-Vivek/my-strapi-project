@@ -82,27 +82,36 @@ jobs:
       # Step 5: Register New Task Definition
       # -------------------------------
       - name: Register new ECS task definition from existing
-  run: |
-    FAMILY="strapi-service"
+        env:
+          FAMILY: "strapi-service"
+          DB_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          IMAGE_URI: ${{ env.IMAGE_URI }}
+        run: |
+          echo "🔍 Fetching current task definition..."
+          CURRENT_DEF=$(aws ecs describe-task-definition --task-definition "$FAMILY")
 
-    CURRENT_DEF=$(aws ecs describe-task-definition --task-definition $FAMILY)
+          echo "🧩 Preparing new task definition..."
+          NEW_DEF=$(echo "$CURRENT_DEF" | jq \
+            --arg IMAGE "$IMAGE_URI" \
+            --arg DB_URL "postgres://strapiuser:${DB_PASSWORD}@${DB_HOST}:5432/strapidb?ssl=true&sslmode=require" \
+            '
+            .taskDefinition
+            | .containerDefinitions[0].image = $IMAGE
+            | (.containerDefinitions[0].environment[] | select(.name=="DATABASE_URL")).value = $DB_URL
+            | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+            ')
 
-    NEW_DEF=$(echo "$CURRENT_DEF" | jq \
-      --arg IMAGE "${IMAGE_URI}" \
-      --arg DB_URL "postgres://strapiuser:${{ secrets.DATABASE_PASSWORD }}@${{ secrets.DB_HOST }}:5432/strapidb?ssl=true&sslmode=require" \
-      '
-      .taskDefinition
-      | .containerDefinitions[0].image = $IMAGE
-      | (.containerDefinitions[0].environment[] | select(.name=="DATABASE_URL")).value = $DB_URL
-      | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
-      ')
+          echo "$NEW_DEF" > new-taskdef.json
 
-    echo "$NEW_DEF" > new-taskdef.json
+          echo "📝 Registering new ECS task definition..."
+          TASK_DEF_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file://new-taskdef.json \
+            --query 'taskDefinition.taskDefinitionArn' \
+            --output text)
 
-    TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
-
-    echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
-    echo "✅ Registered new task definition: $TASK_DEF_ARN"
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+          echo "✅ Registered new task definition: $TASK_DEF_ARN"
 
 
       # -------------------------------
