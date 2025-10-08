@@ -35,7 +35,7 @@
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/strapi", 
+          "awslogs-group": "/ecs/my-strapi-project-vivek-git", 
           "awslogs-region": "ap-south-1",
           "awslogs-stream-prefix": "ecs/strapi"
         }
