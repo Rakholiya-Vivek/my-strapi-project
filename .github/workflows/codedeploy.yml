@@ -80,7 +80,7 @@ jobs:
          # -------------------------------
       # Step 5: Register New Task Definition
       # -------------------------------
-
+      
       - name: Register new ECS task definition from existing
         run: |
     FAMILY="strapi-service"  # must match var.service_name in Terraform
@@ -108,9 +108,8 @@ jobs:
       # -------------------------------
       # Step 6: Trigger CodeDeploy
       # -------------------------------
-
-      - name: Cancel ALL active deployments (if any)
-        run: |
+- name: Cancel ALL active deployments (if any)
+      run: |
           DEPLOY_IDS=$(aws deploy list-deployments \
             --application-name strapi-codedeploy-app-vivek \
             --deployment-group-name strapi-ecs-deployment-group-vivek \
@@ -126,14 +125,10 @@ jobs:
             echo "✅ No active deployments found."
           fi
 
-
-
       - name: Trigger Blue/Green deployment
         run: |
-          # ❗ FIX 1 — no quotes around ARN (CodeDeploy expects plain ARN, not JSON string)
           sed "s|<TASK_DEF_ARN>|${TASK_DEF_ARN}|g" appspec.yml > appspec-rendered.yml
 
-          # ❗ FIX 2 — use ECSAllAtOnce or Canary (must match deployment_group)
           aws deploy create-deployment \
             --application-name strapi-codedeploy-app-vivek \
             --deployment-group-name strapi-ecs-deployment-group-vivek \
