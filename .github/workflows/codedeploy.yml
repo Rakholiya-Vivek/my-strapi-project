@@ -77,39 +77,35 @@ jobs:
           docker tag "${IMAGE_URI}" "${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:latest" || true
           docker push "${{ env.ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPO }}:latest" || true
 
-         # -------------------------------
+      
+      # -------------------------------
       # Step 5: Register New Task Definition
       # -------------------------------
-      
       - name: Register new ECS task definition from existing
         run: |
-    FAMILY="strapi-service"  # must match var.service_name in Terraform
+          FAMILY="strapi-service"  # must match var.service_name in Terraform
 
-    # Get current task definition JSON
-    CURRENT_DEF=$(aws ecs describe-task-definition --task-definition $FAMILY)
+          # Get current task definition JSON
+          CURRENT_DEF=$(aws ecs describe-task-definition --task-definition $FAMILY)
 
-    # Replace image URI and remove unnecessary keys
-    NEW_DEF=$(echo "$CURRENT_DEF" | jq --arg IMAGE "${IMAGE_URI}" '
-      .taskDefinition
-      | .containerDefinitions[0].image = $IMAGE
-      | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
-    ')
+          # Replace image URI and remove unnecessary keys
+          NEW_DEF=$(echo "$CURRENT_DEF" | jq --arg IMAGE "${IMAGE_URI}" '
+            .taskDefinition
+            | .containerDefinitions[0].image = $IMAGE
+            | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)
+          ')
 
-    # Save new definition
-    echo "$NEW_DEF" > new-taskdef.json
+          echo "$NEW_DEF" > new-taskdef.json
 
-    # Register new task definition
-    TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
-
-    echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
-    echo "✅ Registered new task definition: $TASK_DEF_ARN"
-      
+          TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://new-taskdef.json --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+          echo "✅ Registered new task definition: $TASK_DEF_ARN"
 
       # -------------------------------
       # Step 6: Trigger CodeDeploy
       # -------------------------------
-- name: Cancel ALL active deployments (if any)
-      run: |
+      - name: Cancel ALL active deployments (if any)
+        run: |
           DEPLOY_IDS=$(aws deploy list-deployments \
             --application-name strapi-codedeploy-app-vivek \
             --deployment-group-name strapi-ecs-deployment-group-vivek \
