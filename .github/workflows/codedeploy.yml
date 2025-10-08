@@ -92,7 +92,7 @@ jobs:
 
           # Encode special characters in DB password
           ENCODED_PW=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${DB_PASSWORD}'''))")
-          DB_URL="postgres://${DB_USER}:${ENCODED_PW}@${DB_HOST}:5432/${DB_NAME}?ssl=true&sslmode=require"
+          DB_URL="postgres://strapiuser:SuperSecurePassword123%2521%2540@:5432/strapidb?ssl=true&sslmode=require"
           echo "Using database URL: $DB_URL"
 
           # Try to get existing task definition
