@@ -81,6 +81,7 @@ jobs:
       # ---------------------------------------
       # Step 5: Register new ECS Task Definition
       # ---------------------------------------
+     
       - name: Register new ECS task definition
         run: |
           FAMILY="strapi-service"
@@ -90,9 +91,9 @@ jobs:
           DB_HOST="${{ secrets.DB_HOST }}"
           DB_NAME="strapidb"
 
-          # Encode special characters in DB password
+          # Encode password and form DB URL securely
           ENCODED_PW=$(python3 -c "import urllib.parse; print(urllib.parse.quote('''${DB_PASSWORD}'''))")
-          DB_URL="postgres://strapiuser:SuperSecurePassword123%2521%2540@:5432/strapidb?ssl=true&sslmode=require"
+          DB_URL="postgres://${DB_USER}:${ENCODED_PW}@${DB_HOST}:5432/${DB_NAME}?ssl=true&sslmode=require"
           echo "Using database URL: $DB_URL"
 
           # Try to get existing task definition
@@ -129,6 +130,7 @@ jobs:
 
           echo "✅ Registered new task definition: $TASK_DEF_ARN"
           echo "TASK_DEF_ARN=$TASK_DEF_ARN" >> $GITHUB_ENV
+
 
       # ---------------------------------------
       # Step 6: Trigger Blue/Green Deployment
