@@ -39,7 +39,7 @@ docker service ls
 docker ps
 ```
 
-📸 *Screenshot Placeholder:* `![Swarm Cronjob Service Running](images/swarm-cronjob-service.png)`
+📸 *Screenshot is at path:(images/swarm-cronjob-service.png)`
 
 ---
 
@@ -54,7 +54,7 @@ docker service create \
   alpine:latest sh -c "echo 'Hello from Swarm at $(date)'"
 ```
 
-📸 *Screenshot Placeholder:* `![Cronjob Created](images/cronjob-create.png)`
+📸 *Screenshot is at path:(images/cronjob-create.png)`
 
 ---
 
@@ -74,7 +74,7 @@ Example output:
 Hello from Swarm at Thu Oct 09 11:15:00 UTC 2025
 ```
 
-📸 *Screenshot Placeholder:* `![Job Execution Logs](images/job-execution-logs.png)`
+📸 *Screenshot is at path:(images/job-execution-logs.png)`
 
 ---
 
