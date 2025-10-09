@@ -111,5 +111,6 @@ variable "desired_count" {
 }
 variable "db_password" {
   type      = string
+  default = "SuperSecurePassword123!"
   sensitive = true
 }
