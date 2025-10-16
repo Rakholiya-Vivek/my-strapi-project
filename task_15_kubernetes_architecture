@@ -1,0 +1,308 @@
+# Kubernetes Architecture and Core Concepts
+
+# Task : 15 – Documentation
+
+
+### Objective
+
+- This document explains the fundamental and advanced concepts of Kubernetes (K8s), including its architecture, components, networking, storage, namespaces, deployments, scheduling, and more — with a mix of theory and practical insights for better understanding.
+
+### 1. Kubernetes Architecture
+
+- Kubernetes follows a Master-Worker (Control Plane - Node) architecture.
+
+#### 1.1 Control Plane Components
+
+- The Control Plane manages the overall cluster state. It makes decisions about scheduling, scaling, and deploying workloads.
+
+- Component	Description
+  - API Server (kube-apiserver)	Acts as the entry point for all cluster operations. It exposes the Kubernetes API which is used by users, CLI (kubectl), and internal components.
+- etcd	
+  - A distributed key-value store that stores all cluster data and configuration. It is the “brain” of Kubernetes where all states are persisted.
+- Controller Manager (kube-controller-manager)	
+  - Runs various controllers (ReplicaSet, Node, Endpoint controllers) that ensure the cluster’s desired state matches the actual state.
+- Scheduler (kube-scheduler)	
+  - Assigns newly created pods to appropriate nodes based on resource availability, affinity rules, and constraints.
+- Cloud Controller Manager	
+  - Integrates Kubernetes with cloud providers (AWS, Azure, GCP, etc.) for load balancers, storage, and networking.
+
+
+#### 1.2 Node Components
+
+- Each worker node runs the necessary components to host and manage application containers.
+
+- Component	Description
+  - Kubelet	Agent running on each node that ensures containers are running as specified in Pod definitions.
+- Kube-Proxy	
+  - Handles networking and routes traffic between pods and services.
+- Container Runtime	
+  - The engine that runs containers (e.g., Docker, containerd, CRI-O).
+
+
+
+### 2. Kubernetes Objects
+
+- Kubernetes objects are persistent entities that represent the state of your cluster.
+
+
+- Pod	
+  - Smallest deployable unit; wraps one or more containers.	
+  - Running a single microservice or app.
+
+- ReplicaSet	
+  - Ensures a specified number of identical pods are running.	
+  - Auto-healing of pods.
+
+- Deployment	
+  - Manages ReplicaSets and provides rolling updates.	
+  - Version control, rollback, scaling.
+
+- StatefulSet	
+  - Manages stateful applications (e.g., databases).	
+  - Apps needing persistent identity or storage.
+
+- DaemonSet	
+  - Ensures a pod runs on every node (e.g., log collector).	
+  - Node-level services like monitoring agents.
+
+- Job	
+  - Runs pods until a specific task completes.	
+  - Batch processing tasks.
+
+Hierarchy:
+Deployment → ReplicaSet → Pods
+
+
+
+### 3. Networking Components
+
+- Kubernetes networking allows communication between containers, pods, and services.
+
+- ClusterIP	: Default type; exposes service only within the cluster.
+
+- NodePort	: Exposes service on each node’s IP at a static port.
+
+- LoadBalancer : Exposes service externally using a cloud provider’s load balancer.
+
+
+#### CNI Plugins
+
+- CNI (Container Network Interface) defines how pods get IPs and communicate. Common CNIs:
+
+  - Flannel – Simple overlay network.
+
+  - Calico – Advanced policy-based networking.
+
+  - Weave Net – Easy peer-to-peer networking.
+
+- Pod Communication Flow:
+
+  1. Pod-to-pod → via CNI plugin.
+
+  2. Pod-to-service → via kube-proxy.
+
+  3. External-to-service → via NodePort or LoadBalancer.
+
+
+### 4. Storage Components
+
+- Persistent Volume (PV) : Actual storage resource in the cluster.
+
+- Persistent Volume Claim (PVC) : A request for storage by a pod.
+
+- StorageClass : Defines dynamic provisioning of volumes.
+
+- ConfigMap	: Stores non-sensitive configuration data.
+
+- Secret : Stores sensitive data like passwords and keys.
+
+#### Data Persistence Flow:
+
+  1. Admin creates PV or StorageClass.
+
+  2. User defines PVC in Pod spec.
+
+  3. Kubernetes binds PVC to PV dynamically or statically.
+
+
+### 5. Namespaces
+
+- Namespaces logically isolate cluster resources.
+- They help manage multi-environment or multi-team clusters.
+
+#### Benefits:
+
+- Resource isolation
+
+- Access control via RBAC
+
+- Easy resource quota management
+
+##### Example:
+```
+kubectl create namespace dev
+kubectl get pods -n dev
+```
+
+
+### 6. Deployments
+
+- Deployments manage ReplicaSets and ensure application availability.
+
+##### Deployment Strategies
+
+- Rolling Update : Updates pods gradually without downtime.
+
+- Recreate : Stops old pods before creating new ones.
+
+- Blue/Green : Two environments (old and new) exist; traffic switches once ready.
+
+- Canary : Small % of users get new version before full rollout.
+
+#### Advantages:
+
+- Version control
+- Rollback support
+- Scaling flexibility
+
+### 7. Services & Ingress
+
+#### Services
+
+- A Service exposes a set of pods under one logical name and IP.
+
+Example:
+```
+kind: Service
+apiVersion: v1
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: web
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: NodePort
+```
+
+#### Ingress
+
+- Ingress Controller: Manages incoming HTTP/HTTPS traffic.
+
+- Ingress Resource: Defines routing rules.
+
+Example:
+```
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress
+spec:
+  rules:
+    - host: example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: my-service
+                port:
+                  number: 80
+```
+
+### 8. Health Probes
+
+- Liveness Probe : Checks if the app is alive; restarts pod if fails.	/healthz
+- Readiness Probe : Checks if pod is ready to receive traffic.	/ready
+- Startup Probe : Checks if app started successfully.	/start
+
+Example:
+```
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 5
+```
+
+
+### 9. Sidecar Containers
+
+- A sidecar runs alongside the main container to support its function.
+
+#### Common Use Cases:
+
+- Logging: Fluentd, Filebeat
+
+- Proxy: Envoy, Istio
+
+- Monitoring: Prometheus exporters
+
+- Data Sync: Shared volume sync between services
+
+
+
+### 10. Resource Quotas & Limits
+
+- Kubernetes allows you to define resource usage boundaries.
+
+
+- Requests : Minimum resources a container needs.
+- Limits : Maximum resources a container can use.
+- ResourceQuota : Restricts total usage in a namespace.
+
+Example:
+```
+resources:
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+```
+
+
+### 11. Advanced Scheduling Concepts
+
+- Node Selector
+  - Assign pods to nodes with matching labels.	
+  - Run DB pods on SSD nodes.
+
+- Node Affinity	
+  - Advanced matching rules for node labels.	
+  - Prefer specific zones.
+
+- Pod Affinity / Anti-Affinity	
+  - Place pods together or apart.	
+  - Spread replicas across nodes.
+
+- Taints and Tolerations	
+  - Prevent pods from being scheduled on unsuitable nodes.	
+  - Reserve nodes for special workloads.
+
+Example:
+```
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: disktype
+          operator: In
+          values:
+          - ssd
+```
+### Conclusion
+
+- Kubernetes provides a powerful, scalable, and self-healing system for running containerized applications.
+- Understanding its architecture and core concepts helps in:
+
+  - Efficient deployment and scaling
+  - Cost optimization
+  - Better resource management
+  - Seamless CI/CD automation
